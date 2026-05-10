@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🚀 BizFlow AI — Advanced Business Management Platform
 
-## Getting Started
+BizFlow AI is a high-fidelity, role-based SaaS platform designed for elite agencies and enterprises. It integrates AI-driven analytics, granular team management, and automated invoicing into a stunning, responsive interface.
 
-First, run the development server:
+![Dashboard Preview](https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=2070)
 
+## ✨ Features
+
+- **🛡️ Granular RBAC (Role-Based Access Control):** 
+  - **OWNER:** Full workspace control, billing, and danger zone access.
+  - **ADMIN:** Complete management of team, clients, and analytics.
+  - **MANAGER:** Team coordination, report generation, and client tracking.
+  - **MEMBER:** Operational access to clients and basic AI tools.
+  - **VIEWER:** Read-only access to dashboard and specific metrics.
+
+- **📊 AI-Driven Analytics Engine:**
+  - Real-time revenue tracking and growth projections.
+  - Interactive charts powered by Recharts (Revenue, User Activity, Traffic).
+  - AI Audit tools for predictive business simulations.
+
+- **🤖 Elite AI Assistant:**
+  - Specialized GPT-4o powered chat interface for business insights.
+  - Context-aware suggestions based on your organization's data.
+
+- **💼 Project & Client Management:**
+  - Status tracking (Active, Lead, Churned).
+  - Revenue per client analysis and relationship history.
+
+- **🧾 Smart Invoicing System:**
+  - Automated invoice generation with professional templates.
+  - Status management (Paid, Sent, Overdue, Draft).
+
+- **🎨 Premium Design System:**
+  - **Next.js 15+** with App Router architecture.
+  - **Tailwind CSS v4** semantic variable system.
+  - **Framer Motion** for sleek, glassmorphic animations.
+  - **Lottie Animations** for a dynamic, "alive" UI feel.
+
+## 🛠️ Tech Stack
+
+- **Frontend:** [Next.js](https://nextjs.org/), [React](https://reactjs.org/), [Tailwind CSS](https://tailwindcss.com/)
+- **Backend:** [Drizzle ORM](https://orm.drizzle.team/), [PostgreSQL (Neon)](https://neon.tech/)
+- **Auth:** [Clerk](https://clerk.com/)
+- **Animation:** [Framer Motion](https://www.framer.com/motion/), [Lottie](https://lottiefiles.com/)
+- **Database:** [Neon DB](https://neon.tech/), [Redis](https://redis.io/) (for caching)
+
+## 🚀 Getting Started
+
+### 1. Prerequisites
+- Node.js 20+
+- PostgreSQL instance (or Neon DB)
+- Clerk API Keys
+
+### 2. Installation
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Clone the repository
+git clone https://github.com/yourusername/bizflow-ai.git
+
+# Install dependencies
+npm install
+
+# Setup environment variables
+cp .env.example .env
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Database Setup
+```bash
+# Push schema to database
+npm run db:push
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+# Seed initial data (Organizations, Clients, Analytics)
+npm run db:seed
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 4. Running Locally
+```bash
+npm run dev
+```
+The app will be available at `http://localhost:3000`.
 
-## Learn More
+## 🧪 Development & Testing (Mock Roles)
 
-To learn more about Next.js, take a look at the following resources:
+You can test different roles without changing the database using the `mockRole` query parameter:
+- **Owner:** `/dashboard?mockRole=OWNER`
+- **Admin:** `/dashboard?mockRole=ADMIN`
+- **Manager:** `/dashboard?mockRole=MANAGER`
+- **Viewer:** `/dashboard?mockRole=VIEWER`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Built with ❤️ by the BizFlow AI Team.
