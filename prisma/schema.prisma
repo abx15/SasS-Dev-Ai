@@ -1,0 +1,313 @@
+// Prisma schema for BizFlow AI - AI Business Management SaaS
+// Database: PostgreSQL (Neon)
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MANAGER
+  MEMBER
+  VIEWER
+}
+
+enum SubscriptionPlan {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  PAST_DUE
+  CANCELED
+  TRIALING
+}
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
+  LEAD
+  CHURNED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum MemberStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+enum ReportType {
+  REVENUE
+  GROWTH
+  CHURN
+  CUSTOM
+}
+
+enum ReportStatus {
+  GENERATING
+  READY
+  FAILED
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
+model User {
+  id             String    @id @default(cuid())
+  clerkId        String    @unique
+  email          String    @unique
+  name           String?
+  avatarUrl      String?
+  role           UserRole  @default(MEMBER)
+  organizationId String?
+  isActive       Boolean   @default(true)
+  emailVerified  Boolean   @default(false)
+  lastLoginAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  teamMemberships TeamMember[]
+  assignedClients Client[]      @relation("AssignedTo")
+  activityLogs    ActivityLog[]
+  notifications   Notification[]
+  aiReports       AIReport[]    @relation("CreatedBy")
+  invitedMembers  TeamMember[]  @relation("InvitedBy")
+
+  @@index([clerkId])
+  @@index([email])
+  @@map("users")
+}
+
+model Organization {
+  id                    String             @id @default(cuid())
+  name                  String
+  slug                  String             @unique
+  logoUrl               String?
+  plan                  SubscriptionPlan   @default(FREE)
+  stripeCustomerId      String?            @unique
+  stripeSubscriptionId  String?            @unique
+  subscriptionStatus    SubscriptionStatus @default(INACTIVE)
+  subscriptionEndsAt    DateTime?
+  maxUsers              Int                @default(1)
+  maxClients            Int                @default(5)
+  maxInvoices           Int                @default(10)
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  users        User[]
+  members      TeamMember[]
+  clients      Client[]
+  invoices     Invoice[]
+  reports      AIReport[]
+  analytics    Analytics[]
+  activityLogs ActivityLog[]
+  notification Notification[]
+  subscription Subscription?
+
+  @@index([slug])
+  @@map("organizations")
+}
+
+model Client {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  email          String
+  phone          String?
+  company        String?
+  address        String?
+  city           String?
+  country        String?
+  status         ClientStatus @default(LEAD)
+  totalRevenue   Float        @default(0)
+  totalInvoices  Int          @default(0)
+  assignedToId   String?
+  notes          String?
+  tags           String[]     @default([])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  assignedTo   User?        @relation("AssignedTo", fields: [assignedToId], references: [id])
+  invoices     Invoice[]
+
+  @@unique([organizationId, email])
+  @@index([organizationId])
+  @@index([email])
+  @@map("clients")
+}
+
+model Invoice {
+  id             String        @id @default(cuid())
+  invoiceNumber  String        // Unique per organization (checked in code or composite unique)
+  organizationId String
+  clientId       String
+  status         InvoiceStatus @default(DRAFT)
+  amount         Float
+  tax            Float         @default(0)
+  discount       Float         @default(0)
+  totalAmount    Float
+  currency       String        @default("USD")
+  issueDate      DateTime      @default(now())
+  dueDate        DateTime
+  paidAt         DateTime?
+  items          Json          @default("[]") // Array of line items
+  notes          String?
+  terms          String?
+  stripePaymentId String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client       Client       @relation(fields: [clientId], references: [id])
+
+  @@unique([organizationId, invoiceNumber])
+  @@index([organizationId])
+  @@index([clientId])
+  @@map("invoices")
+}
+
+model TeamMember {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  role           UserRole     @default(MEMBER)
+  permissions    String[]     @default([])
+  status         MemberStatus @default(PENDING)
+  invitedById    String?
+  invitedAt      DateTime     @default(now())
+  joinedAt       DateTime?
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy    User?        @relation("InvitedBy", fields: [invitedById], references: [id])
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+  @@map("team_members")
+}
+
+model Analytics {
+  id             String   @id @default(cuid())
+  organizationId String
+  date           DateTime @default(now())
+  revenue        Float    @default(0)
+  newUsers       Int      @default(0)
+  activeUsers    Int      @default(0)
+  newClients     Int      @default(0)
+  invoicesSent   Int      @default(0)
+  invoicesPaid   Int      @default(0)
+  conversionRate Float    @default(0)
+  churnRate      Float    @default(0)
+  trafficData    Json     @default("{}")
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, date])
+  @@map("analytics")
+}
+
+model AIReport {
+  id             String       @id @default(cuid())
+  organizationId String
+  createdById    String
+  title          String
+  type           ReportType
+  prompt         String
+  content        String?      @db.Text
+  insights       Json         @default("{}")
+  status         ReportStatus @default(GENERATING)
+  createdAt      DateTime     @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy    User         @relation("CreatedBy", fields: [createdById], references: [id])
+
+  @@index([organizationId])
+  @@map("ai_reports")
+}
+
+model Notification {
+  id             String           @id @default(cuid())
+  userId         String
+  organizationId String
+  type           NotificationType @default(INFO)
+  title          String
+  message        String
+  isRead         Boolean          @default(false)
+  readAt         DateTime?
+  actionUrl      String?
+  createdAt      DateTime         @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("notifications")
+}
+
+model ActivityLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String?
+  action         String   // e.g. "invoice.created"
+  entity         String   // e.g. "Invoice"
+  entityId       String?
+  metadata       Json     @default("{}")
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User?        @relation(fields: [userId], references: [id])
+
+  @@index([organizationId])
+  @@index([userId])
+  @@map("activity_logs")
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  organizationId       String             @unique
+  stripeSubscriptionId String             @unique
+  stripePriceId        String?
+  stripeCustomerId     String?
+  status               SubscriptionStatus
+  plan                 SubscriptionPlan
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean            @default(false)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
