@@ -35,8 +35,6 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-import { LenisProvider } from "@/components/providers/LenisProvider";
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <ClerkProvider>
@@ -48,16 +46,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             enableSystem
             disableTransitionOnChange={false}
           >
-            <LenisProvider>
-              <QueryProvider>
-                {children}
-                <Toaster position="bottom-right" richColors />
-              </QueryProvider>
-            </LenisProvider>
+            <QueryProvider>
+              {children}
+              <Toaster position="bottom-right" richColors />
+            </QueryProvider>
           </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>
   )
 }
-
