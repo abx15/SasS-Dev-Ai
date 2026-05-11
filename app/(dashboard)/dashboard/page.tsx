@@ -1,267 +1,241 @@
-'use client';
-
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+'use client'
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { 
-  BarChart3, 
-  Users, 
-  DollarSign, 
-  TrendingUp,
-  Zap,
-  ArrowRight,
-  Sparkles,
-  ArrowUpRight,
-  LayoutDashboard
-} from 'lucide-react';
-import StatsCard from '@/components/shared/StatsCard';
-import RevenueChart from '@/components/dashboard/charts/RevenueChart';
-import AISuggestionsWidget from '@/components/dashboard/AISuggestionsWidget';
-import UserActivityChart from '@/components/dashboard/charts/UserActivityChart';
-import SubscriptionChart from '@/components/dashboard/charts/SubscriptionChart';
-import RecentActivityTable from '@/components/dashboard/RecentActivityTable';
-import CalendarWidget from '@/components/dashboard/CalendarWidget';
-import { SkeletonCard, SkeletonChart } from '@/components/shared/Skeletons';
-import { Button } from '@/components/ui/button';
-import { useRole } from '@/hooks/useRole';
-import { cn } from '@/lib/utils';
-import dynamic from 'next/dynamic';
-const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
+  BarChart3, Users, FileText, Zap, 
+  ArrowUpRight, ArrowDownRight, Sparkles,
+  Plus, Calendar, Search, Bell, ChevronRight
+} from 'lucide-react'
+import { 
+  AreaChart, Area, XAxis, YAxis, 
+  CartesianGrid, Tooltip, ResponsiveContainer 
+} from 'recharts'
+import { VerticalSwiper } from '@/components/shared/swipers/VerticalSwiper'
+import { toast } from 'sonner'
 
-const LottieLoader = ({ url, className }: { url: string, className?: string }) => {
-  const [animationData, setAnimationData] = React.useState<any>(null);
+const chartData = [
+  { name: 'Mon', value: 4000 },
+  { name: 'Tue', value: 3000 },
+  { name: 'Wed', value: 5000 },
+  { name: 'Thu', value: 2780 },
+  { name: 'Fri', value: 1890 },
+  { name: 'Sat', value: 2390 },
+  { name: 'Sun', value: 3490 },
+]
 
-  React.useEffect(() => {
-    fetch(url)
-      .then(res => res.json())
-      .then(data => setAnimationData(data))
-      .catch(err => console.error("Error loading lottie:", err));
-  }, [url]);
-
-  if (!animationData) return null;
-
-  return <Lottie animationData={animationData} loop={true} className={className} />;
-};
-
-const fetchDashboardData = async () => {
-  const res = await fetch('/api/analytics?organizationId=default&days=30');
-  if (!res.ok) throw new Error('Failed to fetch dashboard data');
-  return res.json();
-};
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1
-    }
-  }
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 }
-};
+const recentActivity = [
+  { text: "Invoice #INV-1020 created", time: "2m ago", color: "bg-indigo-500" },
+  { text: "New client 'TechCorp' added", time: "15m ago", color: "bg-emerald-500" },
+  { text: "AI Report generated successfully", time: "1h ago", color: "bg-violet-500" },
+  { text: "Subscription plan upgraded to Pro", time: "3h ago", color: "bg-amber-500" },
+  { text: "Member 'Sarah' joined the team", time: "5h ago", color: "bg-cyan-500" },
+]
 
 export default function DashboardPage() {
-  const { user, role: currentRole, isLoading: isRoleLoading } = useRole();
-  const { data, isLoading: isDataLoading } = useQuery({
-    queryKey: ['dashboard-data'],
-    queryFn: fetchDashboardData,
-  });
+  const [loading, setLoading] = useState(true)
 
-  const isLoading = isRoleLoading || isDataLoading;
+  useEffect(() => {
+    setTimeout(() => setLoading(false), 1000)
+  }, [])
 
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="space-y-8 p-8 animate-pulse">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => <SkeletonCard key={i} />)}
+      <div className="space-y-6">
+        <div className="skeleton h-12 w-64" />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => <div key={i} className="skeleton h-32 rounded-2xl" />)}
         </div>
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2"><SkeletonChart /></div>
-          <div><SkeletonCard /></div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 skeleton h-80 rounded-2xl" />
+          <div className="skeleton h-80 rounded-2xl" />
         </div>
       </div>
-    );
+    )
   }
 
-  const dashboardStats = [
-    { 
-      title: 'Total Revenue', 
-      value: data?.summary?.totalRevenue || 124500, 
-      change: 12.5, 
-      icon: DollarSign, 
-      prefix: '$',
-      color: 'primary' as const,
-      roles: ['OWNER', 'ADMIN', 'MANAGER']
-    },
-    { 
-      title: 'New Clients', 
-      value: data?.summary?.totalNewClients || 48, 
-      change: 8.2, 
-      icon: Users, 
-      color: 'accent' as const,
-      roles: ['OWNER', 'ADMIN', 'MANAGER', 'MEMBER']
-    },
-    { 
-      title: 'Invoices Paid', 
-      value: data?.summary?.totalInvoicesPaid || 156, 
-      change: 14.1, 
-      icon: BarChart3, 
-      color: 'success' as const,
-      roles: ['OWNER', 'ADMIN', 'MANAGER']
-    },
-    { 
-      title: 'AI Usage', 
-      value: 1284, 
-      change: 22.4, 
-      icon: Zap, 
-      color: 'warning' as const,
-      roles: ['OWNER', 'ADMIN', 'MANAGER', 'MEMBER', 'VIEWER']
-    },
-  ].filter(stat => stat.roles.includes(currentRole));
-
   return (
-    <motion.div 
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-      className="p-4 md:p-8 space-y-10 max-w-[1600px] mx-auto"
-    >
-      {/* Premium Header */}
-      <motion.div variants={itemVariants} className="relative overflow-hidden p-8 rounded-[2.5rem] bg-gradient-to-br from-indigo-600/10 via-background to-cyan-500/10 border border-white/5">
-        <div className="absolute top-0 right-0 p-8 opacity-10">
-          <LayoutDashboard size={200} className="text-indigo-500" />
+    <div className="space-y-8 pb-12">
+      {/* Welcome Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h1 className="text-4xl font-bold text-foreground mb-1">Good morning, Arun 👋</h1>
+          <p className="text-muted-foreground flex items-center gap-2">
+            <Calendar className="w-4 h-4" />
+            Monday, November 11, 2024
+          </p>
         </div>
-        
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="p-2 rounded-xl bg-indigo-500/20 text-indigo-400">
-                <Sparkles size={18} />
-              </div>
-              <span className="text-xs font-black uppercase tracking-[0.2em] text-indigo-400/80">Business Overview</span>
-            </div>
-            <h1 className="text-4xl md:text-5xl font-black text-foreground tracking-tight mb-3">
-              Welcome back, <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400">{user?.firstName || 'Business Owner'}</span>
-            </h1>
-            <p className="text-muted-foreground font-medium text-lg max-w-xl">
-              Your ecosystem is thriving. You've hit <span className="text-foreground font-bold">92%</span> of your monthly target with <span className="text-emerald-400 font-bold">15%</span> accelerated growth.
-            </p>
-          </div>
-          
-          <div className="flex flex-wrap items-center gap-4">
-            <Button variant="outline" className="rounded-2xl border-white/10 bg-white/5 hover:bg-white/10 text-foreground font-bold h-14 px-8 backdrop-blur-xl transition-all">
-              Export Analysis
-            </Button>
-            <Button className="rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-black h-14 px-8 shadow-[0_0_40px_-10px_rgba(79,70,229,0.5)] flex items-center gap-3 group transition-all">
-              <Zap className="h-5 w-5 fill-white" />
-              Generate AI Report
-              <ArrowUpRight className="h-5 w-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-            </Button>
-          </div>
+        <div className="flex flex-wrap gap-3">
+          <button onClick={() => toast.info('New Invoice')} className="flex items-center gap-2 px-4 py-2 bg-muted hover:bg-accent text-foreground rounded-xl transition-colors border border-border text-sm font-medium">
+            <Plus className="w-4 h-4" /> New Invoice
+          </button>
+          <button onClick={() => toast.info('Add Client')} className="flex items-center gap-2 px-4 py-2 bg-muted hover:bg-accent text-foreground rounded-xl transition-colors border border-border text-sm font-medium">
+            <Plus className="w-4 h-4" /> Add Client
+          </button>
+          <button onClick={() => toast.info('Generating AI Report')} className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-primary/20 text-sm font-bold">
+            <Sparkles className="w-4 h-4" /> Generate Report
+          </button>
         </div>
-      </motion.div>
-
-      {/* Stats Grid */}
-      <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {dashboardStats.map((stat, i) => (
-          <StatsCard key={stat.title} {...stat} />
-        ))}
-      </motion.div>
-
-      {/* Main Content Grid */}
-      <div className="grid lg:grid-cols-3 gap-8">
-        {/* Main Chart */}
-        <motion.div variants={itemVariants} className="lg:col-span-2">
-          <div className="h-full rounded-[2.5rem] p-1 bg-gradient-to-br from-white/10 to-transparent">
-            <RevenueChart 
-              data={data?.chartData || []} 
-              className="h-full bg-brand-card/80 backdrop-blur-3xl rounded-[2.4rem]"
-            />
-          </div>
-        </motion.div>
-        
-        {/* AI Sidebar - Hidden for Viewer */}
-        {['OWNER', 'ADMIN', 'MANAGER', 'MEMBER'].includes(currentRole) && (
-          <motion.div variants={itemVariants} className="space-y-8">
-            <div className="rounded-[2.5rem] bg-indigo-500/10 border border-indigo-500/20 p-6 flex items-center justify-center overflow-hidden h-48 relative">
-              <div className="absolute inset-0 opacity-20">
-                <LottieLoader url="https://cdn.jsdelivr.net/gh/airbnb/lottie-web@master/demo/ad_v2/data.json" className="w-full h-full" />
-              </div>
-              <div className="relative z-10 text-center">
-                <h4 className="text-lg font-bold text-indigo-400 mb-1">AI Engine Active</h4>
-                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Optimizing Workflow...</p>
-              </div>
-            </div>
-            <AISuggestionsWidget 
-              suggestions={[
-                { id: '1', type: 'insight', text: 'Enterprise clients increased by 20% this week.', cta: 'View Details' },
-                { id: '2', type: 'action', text: 'Invoice #1024 is overdue. Send a reminder?', cta: 'Send Now' },
-                { id: '3', type: 'alert', text: 'Server cost expected to rise next month.', cta: 'Optimize' },
-              ]}
-            />
-            <CalendarWidget 
-              events={[
-                { date: new Date(), type: 'invoice' },
-                { date: new Date(Date.now() + 86400000), type: 'meeting' },
-              ]}
-            />
-          </motion.div>
-        )}
       </div>
 
-      {/* Secondary Data Grid - Restricted for Viewer/Member */}
-      {['OWNER', 'ADMIN', 'MANAGER'].includes(currentRole) && (
-        <div className="grid lg:grid-cols-3 gap-8">
-          <motion.div variants={itemVariants} className="lg:col-span-2">
-            <RecentActivityTable 
-              activities={[
-                { id: '1', action: 'Invoice Paid', user: { name: 'Sarah J.' }, entity: 'Invoice #1024', time: new Date(), status: 'SUCCESS' },
-                { id: '2', action: 'New Client Created', user: { name: 'Mike C.' }, entity: 'TechFlow Inc.', time: new Date(Date.now() - 3600000), status: 'SUCCESS' },
-                { id: '3', action: 'Subscription Upgrade', user: { name: 'Alex M.' }, entity: 'Pro Plan', time: new Date(Date.now() - 7200000), status: 'SUCCESS' },
-                { id: '4', action: 'Payment Failed', user: { name: 'David L.' }, entity: 'Invoice #1021', time: new Date(Date.now() - 86400000), status: 'FAILED' },
-                { id: '5', action: 'Report Generated', user: { name: 'AI Bot' }, entity: 'Growth Analysis', time: new Date(Date.now() - 172800000), status: 'SUCCESS' },
-              ]}
-            />
-          </motion.div>
-          <motion.div variants={itemVariants} className="space-y-8">
-            <div className="rounded-[2.5rem] p-8 bg-brand-card/40 border border-white/5 backdrop-blur-2xl">
-              <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                <Users className="text-indigo-400" size={20} />
-                User Engagement
-              </h3>
-              <UserActivityChart 
-                data={[
-                  { day: 'Mon', active: 400, new: 240 },
-                  { day: 'Tue', active: 300, new: 139 },
-                  { day: 'Wed', active: 200, new: 980 },
-                  { day: 'Thu', active: 278, new: 390 },
-                  { day: 'Fri', active: 189, new: 480 },
-                  { day: 'Sat', active: 239, new: 380 },
-                  { day: 'Sun', active: 349, new: 430 },
-                ]} 
-              />
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Total Revenue', value: '$48,291', change: '+12.5%', trend: 'up', icon: BarChart3, color: 'text-indigo-500' },
+          { label: 'Active Users', value: '1,249', change: '+8.1%', trend: 'up', icon: Users, color: 'text-emerald-500' },
+          { label: 'Total Sales', value: '384', change: '+5.2%', trend: 'up', icon: FileText, color: 'text-violet-500' },
+          { label: 'Conversion Rate', value: '3.24%', change: '+0.3%', trend: 'up', icon: Zap, color: 'text-cyan-500' },
+        ].map((stat, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1 }}
+            className="glass-card p-6 group cursor-default"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-2 rounded-xl bg-muted group-hover:bg-accent transition-colors">
+                <stat.icon className={`w-5 h-5 ${stat.color}`} />
+              </div>
+              <div className={`flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                stat.trend === 'up' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'
+              }`}>
+                {stat.trend === 'up' ? <ArrowUpRight className="w-3 h-3 mr-1" /> : <ArrowDownRight className="w-3 h-3 mr-1" />}
+                {stat.change}
+              </div>
             </div>
-            <div className="rounded-[2.5rem] p-8 bg-brand-card/40 border border-white/5 backdrop-blur-2xl">
-              <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                <TrendingUp className="text-cyan-400" size={20} />
-                Growth Distribution
-              </h3>
-              <SubscriptionChart 
-                data={[
-                  { name: 'Free', value: 400 },
-                  { name: 'Starter', value: 300 },
-                  { name: 'Pro', value: 300 },
-                  { name: 'Enterprise', value: 200 },
-                ]} 
-              />
-            </div>
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">{stat.label}</p>
+            <p className="text-2xl font-bold text-foreground tracking-tight">{stat.value}</p>
           </motion.div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Main Chart */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.4 }}
+          className="lg:col-span-8 glass-card p-6"
+        >
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-lg font-bold text-foreground">Revenue Overview</h3>
+            <select className="bg-muted border border-border rounded-lg px-2 py-1 text-xs focus:outline-none">
+              <option>Last 7 Days</option>
+              <option>Last 30 Days</option>
+            </select>
+          </div>
+          <div className="h-72 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} dy={10} />
+                <YAxis hide />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px' }}
+                  itemStyle={{ color: 'hsl(var(--foreground))' }}
+                />
+                <Area type="monotone" dataKey="value" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
+
+        {/* AI Insights Widget */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.5 }}
+          className="lg:col-span-4 glass-card p-6 bg-gradient-to-br from-primary/10 via-transparent to-transparent border-primary/20"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-bold text-foreground">AI Insights</h3>
+            </div>
+            <button className="text-xs font-semibold text-primary hover:underline">Refresh</button>
+          </div>
+          <div className="space-y-4">
+            {[
+              { title: "Growth Opportunity", text: "Revenue from 'SaaS' category is up 24% this week.", icon: Zap, color: "text-amber-500" },
+              { title: "Churn Alert", text: "3 high-value clients haven't logged in for 10 days.", icon: AlertCircle, color: "text-rose-500" },
+              { title: "Smart Suggestion", text: "Optimize Q4 tax by reconciling invoices now.", icon: FileText, color: "text-indigo-500" },
+            ].map((insight, i) => (
+              <div key={i} className="p-3 rounded-xl bg-card border border-border hover:border-primary/30 transition-all cursor-pointer">
+                <div className="flex items-start gap-3">
+                  <div className={`p-1.5 rounded-lg bg-muted`}>
+                    <insight.icon className={`w-3.5 h-3.5 ${insight.color}`} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-foreground mb-0.5">{insight.title}</p>
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">{insight.text}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Recent Activity Swiper */}
+        <div className="lg:col-span-6 glass-card p-6 overflow-hidden">
+          <h3 className="text-lg font-bold text-foreground mb-6">Recent Activity</h3>
+          <VerticalSwiper 
+            height="220px"
+            slides={recentActivity.map((act, i) => (
+              <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border/50">
+                <div className="flex items-center gap-3">
+                  <div className={`w-2 h-2 rounded-full ${act.color}`} />
+                  <span className="text-sm text-foreground">{act.text}</span>
+                </div>
+                <span className="text-[10px] font-medium text-muted-foreground uppercase">{act.time}</span>
+              </div>
+            ))}
+          />
         </div>
-      )}
-    </motion.div>
-  );
+
+        {/* Top Clients Mini-table */}
+        <div className="lg:col-span-6 glass-card p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-bold text-foreground">Top Clients</h3>
+            <button className="text-xs font-semibold text-primary hover:underline flex items-center gap-1">View All <ChevronRight className="w-3 h-3" /></button>
+          </div>
+          <div className="space-y-4">
+            {[
+              { name: "TechCorp Solutions", revenue: "$12,400", status: "Active" },
+              { name: "Apex Digital Agency", revenue: "$8,200", status: "Active" },
+              { name: "NexaScale Inc", revenue: "$6,500", status: "Away" },
+              { name: "CloudBase Systems", revenue: "$4,100", status: "Active" },
+            ].map((client, i) => (
+              <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500 text-xs font-bold">
+                    {client.name[0]}
+                  </div>
+                  <span className="text-sm font-medium text-foreground">{client.name}</span>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-foreground">{client.revenue}</p>
+                  <span className="text-[10px] text-muted-foreground">{client.status}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
+
+// Add simple AlertCircle icon mock if lucide-react doesn't export it under that name or if needed
+const AlertCircle = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+  </svg>
+)
