@@ -63,6 +63,7 @@
     "svix": "^1.93.0",
     "swiper": "^12.1.4",
     "tailwind-merge": "^2.6.1",
+    "tailwindcss-animate": "^1.0.7",
     "zod": "^3.25.76"
   },
   "devDependencies": {
@@ -78,6 +79,7 @@
     "prisma": "^7.8.0",
     "tailwindcss": "^4.3.0",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   },
   "prisma": {
