@@ -1,115 +1,114 @@
-'use client';
+'use client'
+import { useState } from 'react'
+import { 
+  Search, Bell, Moon, Sun, 
+  ChevronRight, Command, HelpCircle,
+  Menu, X
+} from 'lucide-react'
+import { ThemeToggle } from '@/components/shared/ThemeToggle'
+import { usePathname } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
 
-import React, { useState, useEffect } from 'react';
-import { Search, Bell, Command, Sun, Moon } from 'lucide-react';
-import { ThemeToggle } from '@/components/shared/ThemeToggle';
-import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { DevRoleSwitcher } from './DevRoleSwitcher';
+export default function Header() {
+  const pathname = usePathname()
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-const Header = () => {
-  const pathname = usePathname();
-  const [isCommandOpen, setIsCommandOpen] = useState(false);
-
-  // Handle cmd+k shortcut
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        setIsCommandOpen((prev) => !prev);
-      }
-    };
-    document.addEventListener('keydown', down);
-    return () => document.removeEventListener('keydown', down);
-  }, []);
-
-  const getBreadcrumbs = () => {
-    const paths = pathname.split('/').filter((p) => p);
-    return paths.map((p, i) => (
-      <React.Fragment key={p}>
-        <span className="text-muted-foreground">/</span>
-        <span className={cn(
-          "text-sm font-medium capitalize",
-          i === paths.length - 1 ? "text-foreground" : "text-muted-foreground"
-        )}>
-          {p.replace(/-/g, ' ')}
-        </span>
-      </React.Fragment>
-    ));
-  };
-
+  // Derive breadcrumbs from pathname
+  const pathSegments = pathname.split('/').filter(Boolean)
+  
   return (
-    <header className="h-20 bg-background/50 backdrop-blur-md border-b border-border px-8 flex items-center justify-between relative z-40">
-      {/* Breadcrumbs */}
-      <div className="flex items-center space-x-2">
-        <span className="text-sm font-medium text-muted-foreground">Pages</span>
-        {getBreadcrumbs()}
-      </div>
-
-      {/* Actions */}
-      <div className="flex items-center space-x-6">
-        {/* Search */}
-        <div 
-          className="hidden md:flex items-center space-x-3 bg-muted border border-border px-4 py-2 rounded-2xl text-muted-foreground hover:bg-muted/80 transition-colors cursor-pointer group"
-          onClick={() => setIsCommandOpen(true)}
-        >
-          <Search size={18} className="group-hover:text-foreground" />
-          <span className="text-sm font-medium pr-8">Search anything...</span>
-          <div className="flex items-center space-x-1 bg-background px-2 py-1 rounded-lg border border-border">
-            <Command size={12} />
-            <span className="text-[10px] font-bold">K</span>
-          </div>
-        </div>
-
-        {/* Notifications */}
-        <div className="relative cursor-pointer group">
-          <div className="p-2.5 bg-muted rounded-xl group-hover:bg-primary/10 transition-colors">
-            <Bell size={20} className="text-muted-foreground group-hover:text-primary" />
-          </div>
-          <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full border-2 border-background" />
-        </div>
-
-        <div className="h-6 w-px bg-border" />
-
-        <DevRoleSwitcher />
-
-        <div className="h-6 w-px bg-border" />
-
-        <ThemeToggle />
-      </div>
-
-      {/* Command Palette Mockup (Simplified) */}
-      {isCommandOpen && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="bg-card w-full max-w-2xl rounded-3xl border border-border shadow-2xl p-8">
-            <div className="flex items-center space-x-4 mb-8">
-              <Search className="text-primary" size={24} />
-              <input 
-                autoFocus
-                placeholder="Type a command or search..." 
-                className="bg-transparent border-none outline-none text-xl text-foreground w-full"
-                onKeyDown={(e) => e.key === 'Escape' && setIsCommandOpen(false)}
-              />
+    <header className="h-20 border-b border-sidebar-border bg-background/50 backdrop-blur-xl flex items-center justify-between px-8 sticky top-0 z-30">
+      
+      {/* Left: Breadcrumbs & Search */}
+      <div className="flex items-center gap-8 flex-1">
+        <div className="hidden lg:flex items-center gap-2 text-sm">
+          <span className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors">Home</span>
+          {pathSegments.map((seg, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50" />
+              <span className={`capitalize ${i === pathSegments.length - 1 ? 'text-foreground font-bold' : 'text-muted-foreground'}`}>
+                {seg.replace(/-/g, ' ')}
+              </span>
             </div>
-            <div className="space-y-4">
-              <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Suggestions</p>
-              {['Go to Invoices', 'Create New Client', 'View Reports', 'Profile Settings'].map((s) => (
-                <div key={s} className="p-4 bg-muted rounded-2xl hover:bg-primary/10 transition-colors cursor-pointer text-primary-foreground font-medium">
-                  {s}
+          ))}
+        </div>
+
+        <div className="relative max-w-md w-full hidden md:block group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+          <input 
+            type="text" 
+            placeholder="Search across BizFlow..."
+            className="w-full pl-11 pr-12 py-2.5 bg-muted/50 border border-border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+          />
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 px-1.5 py-0.5 rounded border border-border bg-background text-[10px] font-bold text-muted-foreground">
+            <Command className="w-2.5 h-2.5" /> K
+          </div>
+        </div>
+      </div>
+
+      {/* Right: Actions */}
+      <div className="flex items-center gap-3">
+        <button className="p-2.5 hover:bg-muted rounded-xl text-muted-foreground hover:text-foreground transition-all relative">
+          <HelpCircle className="w-5 h-5" />
+        </button>
+
+        <div className="relative">
+          <button 
+            onClick={() => setShowNotifications(!showNotifications)}
+            className="p-2.5 hover:bg-muted rounded-xl text-muted-foreground hover:text-foreground transition-all relative"
+          >
+            <Bell className="w-5 h-5" />
+            <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-background" />
+          </button>
+          
+          <AnimatePresence>
+            {showNotifications && (
+              <motion.div
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                className="absolute right-0 mt-3 w-80 glass-card shadow-2xl p-4 z-50"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-bold text-sm">Notifications</h4>
+                  <button className="text-[10px] font-bold text-primary hover:underline">Mark all read</button>
                 </div>
-              ))}
-            </div>
-            <button 
-              onClick={() => setIsCommandOpen(false)}
-              className="mt-8 text-muted-foreground text-sm font-medium hover:text-foreground"
-            >
-              Press <kbd className="bg-muted px-2 py-0.5 rounded">ESC</kbd> to close
-            </button>
-          </div>
+                <div className="space-y-3">
+                  {[
+                    { title: "Invoice Paid", msg: "TechCorp paid $9,440", time: "2m ago", color: "bg-emerald-500" },
+                    { title: "System Update", msg: "New AI model deployed", time: "1h ago", color: "bg-indigo-500" },
+                    { title: "Churn Alert", msg: "Apex Digital is at risk", time: "3h ago", color: "bg-rose-500" },
+                  ].map((n, i) => (
+                    <div key={i} className="flex gap-3 p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer">
+                      <div className={`w-2 h-2 mt-1.5 rounded-full ${n.color}`} />
+                      <div>
+                        <p className="text-xs font-bold text-foreground">{n.title}</p>
+                        <p className="text-[10px] text-muted-foreground">{n.msg}</p>
+                        <p className="text-[10px] text-muted-foreground/50 mt-1">{n.time}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button className="w-full mt-4 py-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors border-t border-border pt-4">
+                  View all notifications
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-      )}
-    </header>
-  );
-};
 
-export default Header;
+        <div className="h-8 w-px bg-border mx-2" />
+        
+        <ThemeToggle />
+        
+        <button 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="lg:hidden p-2.5 hover:bg-muted rounded-xl text-muted-foreground"
+        >
+          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      </div>
+    </header>
+  )
+}

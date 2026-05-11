@@ -1,148 +1,133 @@
-'use client';
-
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+'use client'
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { 
-  LayoutDashboard, 
-  BarChart3, 
-  Users, 
-  FileText, 
-  UsersRound, 
-  Bot, 
-  ClipboardList, 
-  ActivitySquare, 
-  CreditCard, 
-  Settings,
-  ChevronLeft,
-  ChevronRight,
-  Zap,
-  LogOut
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { UserButton, SignOutButton } from '@clerk/nextjs';
-import { useRole } from '@/hooks/useRole';
+  LayoutDashboard, BarChart3, Users, FileText, 
+  Bot, Sparkles, CreditCard, Settings, 
+  History, ChevronLeft, ChevronRight, LogOut,
+  Zap, Building2
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { UserButton, useUser } from '@clerk/nextjs'
 
-const navItems = [
-  { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', roles: ['OWNER', 'ADMIN', 'MANAGER', 'MEMBER', 'VIEWER'] },
-  { name: 'Analytics', icon: BarChart3, href: '/dashboard/analytics', roles: ['OWNER', 'ADMIN', 'MANAGER', 'MEMBER', 'VIEWER'] },
-  { name: 'Clients', icon: Users, href: '/dashboard/clients', roles: ['OWNER', 'ADMIN', 'MANAGER', 'MEMBER'] },
-  { name: 'Invoices', icon: FileText, href: '/dashboard/invoices', roles: ['OWNER', 'ADMIN', 'MANAGER'] },
-  { name: 'Team', icon: UsersRound, href: '/dashboard/team', roles: ['OWNER', 'ADMIN', 'MANAGER'] },
-  { name: 'AI Assistant', icon: Bot, href: '/dashboard/ai', roles: ['OWNER', 'ADMIN', 'MANAGER', 'MEMBER'] },
-  { name: 'Reports', icon: ClipboardList, href: '/dashboard/reports', roles: ['OWNER', 'ADMIN', 'MANAGER'] },
-  { name: 'Activity', icon: ActivitySquare, href: '/dashboard/activity', roles: ['OWNER', 'ADMIN'] },
-  { name: 'Billing', icon: CreditCard, href: '/dashboard/billing', roles: ['OWNER', 'ADMIN'] },
-  { name: 'Settings', icon: Settings, href: '/dashboard/settings', roles: ['OWNER', 'ADMIN', 'MANAGER', 'MEMBER', 'VIEWER'] },
-];
+const menuItems = [
+  { group: 'OVERVIEW', items: [
+    { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
+    { name: 'Analytics', icon: BarChart3, href: '/analytics' },
+  ]},
+  { group: 'MANAGEMENT', items: [
+    { name: 'Clients', icon: Users, href: '/clients' },
+    { name: 'Invoices', icon: FileText, href: '/invoices' },
+    { name: 'Team', icon: Users, href: '/team' },
+  ]},
+  { group: 'AI TOOLS', items: [
+    { name: 'AI Assistant', icon: Bot, href: '/ai-assistant' },
+    { name: 'Reports', icon: Sparkles, href: '/reports' },
+  ]},
+  { group: 'ACCOUNT', items: [
+    { name: 'Billing', icon: CreditCard, href: '/billing' },
+    { name: 'Settings', icon: Settings, href: '/settings' },
+    { name: 'Activity Logs', icon: History, href: '/activity-logs' },
+  ]},
+]
 
-const Sidebar = () => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const pathname = usePathname();
-  const { user, role: currentRole } = useRole();
-
-  const filteredNavItems = navItems.filter(item => item.roles.includes(currentRole));
+export default function Sidebar() {
+  const [isCollapsed, setIsCollapsed] = useState(false)
+  const pathname = usePathname()
+  const { user } = useUser()
 
   return (
     <motion.aside
-      animate={{ width: isCollapsed ? 80 : 280 }}
-      className="h-screen bg-card border-r border-border flex flex-col relative z-50 overflow-hidden"
+      initial={false}
+      animate={{ width: isCollapsed ? 80 : 260 }}
+      className="relative h-screen bg-sidebar border-r border-sidebar-border flex flex-col z-40 transition-all duration-300 ease-in-out"
     >
-      {/* Header / Logo */}
-      <div className="p-6 flex items-center justify-between">
-        <AnimatePresence mode="wait">
-          {!isCollapsed ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex items-center space-x-3"
+      {/* Logo Section */}
+      <div className="h-20 flex items-center px-6 mb-4">
+        <Link href="/dashboard" className="flex items-center gap-3 group">
+          <div className="w-10 h-10 rounded-xl animated-gradient flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">
+            <Zap className="w-6 h-6 text-white" />
+          </div>
+          {!isCollapsed && (
+            <motion.span 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              className="text-xl font-black tracking-tight text-foreground"
             >
-              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-                <Zap className="text-primary-foreground fill-primary-foreground" size={24} />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-foreground leading-none">BizFlow</h1>
-                <span className="text-[10px] text-primary font-black uppercase tracking-widest">PRO PLAN</span>
-              </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center mx-auto"
-            >
-              <Zap className="text-primary-foreground fill-primary-foreground" size={24} />
-            </motion.div>
+              Biz<span className="text-primary">Flow</span>
+            </motion.span>
           )}
-        </AnimatePresence>
+        </Link>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 space-y-2 py-6 overflow-y-auto scrollbar-hide">
-        {filteredNavItems.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link key={item.name} href={item.href}>
-              <div
-                className={cn(
-                  'group flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all relative overflow-hidden',
-                  isActive 
-                    ? 'bg-primary/10 text-primary' 
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                )}
-              >
-                {isActive && (
-                  <motion.div 
-                    layoutId="active-pill"
-                    className="absolute left-0 w-1 h-6 bg-primary rounded-r-full" 
-                  />
-                )}
-                <item.icon size={22} className={cn(isActive ? 'text-primary' : 'group-hover:text-foreground')} />
-                {!isCollapsed && <span className="font-semibold text-sm">{item.name}</span>}
-              </div>
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* User / Footer */}
-      <div className="p-4 border-t border-border bg-card">
-        {!isCollapsed ? (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <UserButton afterSignOutUrl="/" />
-              <div className="flex flex-col">
-                <span className="text-sm font-bold text-foreground truncate max-w-[120px]">
-                  {user?.firstName} {user?.lastName || 'User'}
-                </span>
-                <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">{currentRole}</span>
-              </div>
+      <div className="flex-1 overflow-y-auto px-4 space-y-8 scrollbar-hide pb-10">
+        {menuItems.map((group, idx) => (
+          <div key={idx}>
+            {!isCollapsed && (
+              <p className="px-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">
+                {group.group}
+              </p>
+            )}
+            <div className="space-y-1">
+              {group.items.map((item) => {
+                const isActive = pathname === item.href
+                return (
+                  <Link key={item.name} href={item.href}>
+                    <div className={cn(
+                      "flex items-center gap-3 px-4 py-3 rounded-xl transition-all group relative",
+                      isActive 
+                        ? "bg-primary text-white shadow-lg shadow-primary/20" 
+                        : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+                    )}>
+                      <item.icon className={cn("w-5 h-5 flex-shrink-0", isActive ? "text-white" : "group-hover:text-primary")} />
+                      {!isCollapsed && (
+                        <span className="text-sm font-medium">{item.name}</span>
+                      )}
+                      {isActive && !isCollapsed && (
+                        <motion.div layoutId="activeHighlight" className="absolute left-0 w-1 h-6 bg-white rounded-r-full" />
+                      )}
+                      
+                      {/* Tooltip for collapsed mode */}
+                      {isCollapsed && (
+                        <div className="absolute left-16 px-2 py-1 bg-foreground text-background text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+                          {item.name}
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                )
+              })}
             </div>
-            <SignOutButton>
-              <button className="text-muted-foreground hover:text-red-400 transition-colors">
-                <LogOut size={18} />
-              </button>
-            </SignOutButton>
+          </div>
+        ))}
+      </div>
+
+      {/* Footer / User Profile */}
+      <div className="p-4 border-t border-sidebar-border bg-sidebar-accent/30">
+        {!isCollapsed ? (
+          <div className="flex items-center gap-3 px-2">
+            <UserButton afterSignOutUrl="/" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-foreground truncate">{user?.fullName || 'User'}</p>
+              <p className="text-[10px] text-muted-foreground truncate">{user?.primaryEmailAddress?.emailAddress}</p>
+            </div>
           </div>
         ) : (
           <div className="flex justify-center">
-             <UserButton afterSignOutUrl="/" />
+            <UserButton afterSignOutUrl="/" />
           </div>
         )}
       </div>
 
       {/* Collapse Toggle */}
-      <button
+      <button 
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute top-1/2 -right-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-primary-foreground border-2 border-background z-[60] shadow-lg transition-transform hover:scale-110"
+        className="absolute -right-3 top-24 w-6 h-6 rounded-full bg-sidebar border border-sidebar-border flex items-center justify-center text-muted-foreground hover:text-primary hover:scale-110 transition-all shadow-sm"
       >
-        {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+        {isCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
       </button>
     </motion.aside>
-  );
-};
-
-export default Sidebar;
+  )
+}
