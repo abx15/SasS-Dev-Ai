@@ -1,5 +1,6 @@
 import Navbar from '@/components/marketing/Navbar';
 import Footer from '@/components/marketing/Footer';
+import { SmoothScrollProvider } from '@/components/providers/SmoothScrollProvider';
 
 export default function MarketingLayout({
   children,
@@ -7,10 +8,12 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-brand-dark min-h-screen selection:bg-brand-primary/30 selection:text-brand-primary">
-      <Navbar />
-      <main>{children}</main>
-      <Footer />
-    </div>
+    <SmoothScrollProvider>
+      <div className="bg-background min-h-screen selection:bg-primary/30 selection:text-primary">
+        <Navbar />
+        <main>{children}</main>
+        <Footer />
+      </div>
+    </SmoothScrollProvider>
   );
 }
